@@ -4,9 +4,7 @@
 
 [![forthebadge](https://raw.githubusercontent.com/BraveUX/for-the-badge/master/src/images/badges//built-with-love.svg)](https://forthebadge.com) [![forthebadge](https://raw.githubusercontent.com/BraveUX/for-the-badge/master/src/images/badges/kinda-sfw.svg)](https://forthebadge.com) [![forthebadge](https://raw.githubusercontent.com/BraveUX/for-the-badge/master/src/images/badges/made-with-go.svg)](https://forthebadge.com)
 
-Featured in 📹 [Charm in the Wild | December 2026](https://www.youtube.com/watch?v=XuTb7Ao27w4&t=252s) ❤️.
-
-Fork notice: this repository is maintained at `github.com/mansueli/world-cup-2026-cli-dashboard` as a fork of the original project by Cédric Blondeau.
+Fork notice: this repository is maintained at `github.com/mansueli/world-cup-2026-cli-dashboard` as a fork of the original project by Cédric Blondeau for the 2026 World Cup edition.
 
 ## Features
 
@@ -23,7 +21,7 @@ Fork notice: this repository is maintained at `github.com/mansueli/world-cup-202
 
 Install:
 ```bash
-brew tap <tap-owner>/<tap-repo>
+brew tap mansueli/homebrew-world-cup-2026-cli-dashboard
 brew install world-cup-2026-cli-dashboard
 ```
 
