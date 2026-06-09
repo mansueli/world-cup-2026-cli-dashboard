@@ -1,0 +1,49 @@
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+
+archives:
+  - replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+      386: i386
+      amd64: x86_64
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+
+universal_binaries:
+  - replace: true
+
+brews:
+  - name: world-cup-2026-cli-dashboard
+    homepage: "https://github.com/{{ .Env.GITHUB_REPOSITORY }}"
+    license: "MIT"
+    tap:
+      owner: "{{ .Env.HOMEBREW_TAP_OWNER }}"
+      name: "{{ .Env.HOMEBREW_TAP_REPO }}"
+      branch: main
+    commit_author:
+      name: "{{ .Env.HOMEBREW_COMMIT_AUTHOR_NAME }}"
+      email: "{{ .Env.HOMEBREW_COMMIT_AUTHOR_EMAIL }}"
+    repository:
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
