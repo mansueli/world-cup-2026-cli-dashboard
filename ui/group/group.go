@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/mansueli/world-cup-2026-cli-dashboard/data"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/mansueli/world-cup-2026-cli-dashboard/data"
 )
 
 var (

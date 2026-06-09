@@ -5,8 +5,8 @@ import (
 	"math"
 	"time"
 
-	"github.com/mansueli/world-cup-2026-cli-dashboard/data"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/mansueli/world-cup-2026-cli-dashboard/data"
 )
 
 const (
@@ -21,7 +21,7 @@ var (
 			Width(matchItemWidth).
 			Padding(1, 0)
 
-	selectedMatchItemStyle = matchItemStyle.Copy().
+	selectedMatchItemStyle = matchItemStyle.
 				Bold(true).
 				Foreground(lipgloss.Color("#FAFAFA")).
 				Background(lipgloss.Color("#282A3A"))
@@ -49,7 +49,7 @@ func Nav(params NavParams) string {
 	pageIndex := params.Index % pageSize
 
 	matchesStartIndex := currentPage * pageSize
-	matchesToRender := params.Matches[matchesStartIndex:min(len(params.Matches), matchesStartIndex+pageSize+1)]
+	matchesToRender := params.Matches[matchesStartIndex:minInt(len(params.Matches), matchesStartIndex+pageSize+1)]
 
 	renderedMatches := make([]string, len(matchesToRender))
 	for i, match := range matchesToRender {
@@ -126,7 +126,7 @@ func renderPagination(totalPages int, currentPage int) string {
 	return s
 }
 
-func min(a, b int) int {
+func minInt(a, b int) int {
 	if a < b {
 		return a
 	}

@@ -4,6 +4,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/charmbracelet/bubbles/help"
+	"github.com/charmbracelet/bubbles/key"
+	"github.com/charmbracelet/bubbles/spinner"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/mansueli/world-cup-2026-cli-dashboard/data"
 	"github.com/mansueli/world-cup-2026-cli-dashboard/ui/bigtext"
 	"github.com/mansueli/world-cup-2026-cli-dashboard/ui/bracket"
@@ -12,11 +17,6 @@ import (
 	"github.com/mansueli/world-cup-2026-cli-dashboard/ui/nav"
 	"github.com/mansueli/world-cup-2026-cli-dashboard/ui/playerstats"
 	"github.com/mansueli/world-cup-2026-cli-dashboard/ui/statusbar"
-	"github.com/charmbracelet/bubbles/help"
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/spinner"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
 
 type intervalRefreshMsg time.Time
@@ -101,7 +101,7 @@ func (m *dashboard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			m.matchIndexChanged = true
-			m.matchIndex = min(m.matchIndex+1, len(m.sortedMatches)-1)
+			m.matchIndex = minInt(m.matchIndex+1, len(m.sortedMatches)-1)
 			return m, nil
 		case "left", "a", "h":
 			if len(m.sortedMatches) == 0 {
@@ -109,7 +109,7 @@ func (m *dashboard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			m.matchIndexChanged = true
-			m.matchIndex = max(m.matchIndex-1, 0)
+			m.matchIndex = maxInt(m.matchIndex-1, 0)
 			return m, nil
 		case "r":
 			m.dataFetchLoading = true
@@ -202,7 +202,7 @@ func (m *dashboard) View() string {
 		SetString(match.Match(match.MatchParams{
 			BigText:           m.bigtext,
 			PlayerStatsByTeam: m.playerStatsByTeam,
-			Match:             m.sortedMatches[min(m.matchIndex, len(m.sortedMatches)-1)],
+			Match:             m.sortedMatches[minInt(m.matchIndex, len(m.sortedMatches)-1)],
 			Width:             m.width - 1 - 1,
 		})).
 		Height(matchContainerHeight).
@@ -215,7 +215,7 @@ func (m *dashboard) View() string {
 }
 
 func (m *dashboard) groupOrBracket() string {
-	currentMatch := m.sortedMatches[min(m.matchIndex, len(m.sortedMatches)-1)]
+	currentMatch := m.sortedMatches[minInt(m.matchIndex, len(m.sortedMatches)-1)]
 	if currentMatch.Stage == string(data.StageGroup) {
 		homeTeamInfo, ok := data.TeamInfoByCode[currentMatch.HomeTeamCode]
 		if !ok {
@@ -252,14 +252,14 @@ func pickMatchIndex(matches []data.Match) int {
 	return len(matches) - 1
 }
 
-func max(a, b int) int {
+func maxInt(a, b int) int {
 	if a > b {
 		return a
 	}
 	return b
 }
 
-func min(a, b int) int {
+func minInt(a, b int) int {
 	if a < b {
 		return a
 	}

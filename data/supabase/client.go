@@ -132,8 +132,8 @@ func (c *Client) SortedMatches() ([]data.Match, error) {
 			HomeTeamCode:  homeCode,
 			AwayTeamCode:  awayCode,
 			Date:          parseDate(game.KickoffAt, game.LocalDateRaw),
-			HomeTeamScore: uint64(game.HomeScore),
-			AwayTeamScore: uint64(game.AwayScore),
+			HomeTeamScore: scoreToUint64(game.HomeScore),
+			AwayTeamScore: scoreToUint64(game.AwayScore),
 			Status:        status,
 			Minute:        minute,
 			Stage:         mapStage(game.Stage),
@@ -266,6 +266,13 @@ func atoi(value string) int {
 		return 0
 	}
 	return parsed
+}
+
+func scoreToUint64(score int) uint64 {
+	if score < 0 {
+		return 0
+	}
+	return uint64(score)
 }
 
 type groupRow struct {
