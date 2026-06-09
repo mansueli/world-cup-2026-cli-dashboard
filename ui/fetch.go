@@ -1,9 +1,9 @@
 package ui
 
 import (
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/mansueli/world-cup-2026-cli-dashboard/data"
 	"github.com/mansueli/world-cup-2026-cli-dashboard/ui/playerstats"
-	tea "github.com/charmbracelet/bubbletea"
 )
 
 type dataFetcher interface {

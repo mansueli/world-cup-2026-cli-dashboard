@@ -5,11 +5,11 @@ import (
 	"math"
 	"strconv"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/mansueli/world-cup-2026-cli-dashboard/data"
 	"github.com/mansueli/world-cup-2026-cli-dashboard/ui/bigtext"
 	"github.com/mansueli/world-cup-2026-cli-dashboard/ui/flags"
 	"github.com/mansueli/world-cup-2026-cli-dashboard/ui/playerstats"
-	"github.com/charmbracelet/lipgloss"
 )
 
 type MatchParams struct {
