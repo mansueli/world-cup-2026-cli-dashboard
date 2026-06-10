@@ -1,3 +1,5 @@
+version: "2"
+
 run:
   tests: false
 
@@ -10,14 +12,16 @@ linters:
     - bodyclose
     - errcheck
     - ineffassign
-    - goimports
     - gosec
     - gosimple
     - govet
     - nilerr
     - predeclared
     - staticcheck
-    - typecheck
     - unconvert
     - unused
     - whitespace
+
+formatters:
+  enable:
+    - goimports

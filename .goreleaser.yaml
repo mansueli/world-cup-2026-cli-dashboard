@@ -40,7 +40,7 @@ brews:
   - name: world-cup-2026-cli-dashboard
     homepage: "https://github.com/{{ .Env.GITHUB_REPOSITORY }}"
     license: "MIT"
-    tap:
+    repository:
       owner: "{{ .Env.HOMEBREW_TAP_OWNER }}"
       name: "{{ .Env.HOMEBREW_TAP_REPO }}"
       branch: main
