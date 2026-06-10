@@ -27,7 +27,7 @@ func Render(countryCode string) string {
 
 		for x := 0; x < 25; x++ {
 			color1 := countryFlag[y][x]
-			color2 := countryFlag[y+1][x]
+			color2 := countryFlag[y+1][x] //nolint:gosec // y+1 < height guaranteed by loop condition
 
 			b.WriteString(lipgloss.
 				NewStyle().
@@ -55,7 +55,7 @@ func emojiFlag(iso2 string) string {
 	}
 
 	const regionalIndicatorA = 0x1F1E6
-	r1 := rune(regionalIndicatorA + int(b[0]-'A'))
-	r2 := rune(regionalIndicatorA + int(b[1]-'A'))
+	r1 := rune(regionalIndicatorA + int(b[0]-'A')) //nolint:gosec // value range [0x1F1E6, 0x1F1FF] fits in int32
+	r2 := rune(regionalIndicatorA + int(b[1]-'A')) //nolint:gosec // value range [0x1F1E6, 0x1F1FF] fits in int32
 	return string([]rune{r1, r2})
 }

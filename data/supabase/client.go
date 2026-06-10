@@ -188,7 +188,7 @@ func (c *Client) get(table string, out any, query string) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
 		return fmt.Errorf("supabase %s returned status %d", table, resp.StatusCode)
