@@ -33,7 +33,7 @@ brews:
     homepage: "https://github.com/mansueli/world-cup-2026-cli-dashboard"
     description: "Watch live World Cup 2026 matches in your terminal"
     license: "MIT"
-
+    directory: Formula
     repository:
       owner: "{{ .Env.HOMEBREW_TAP_OWNER }}"
       name: homebrew-world-cup-2026-cli-dashboard
