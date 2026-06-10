@@ -12,7 +12,6 @@ linters:
     - ineffassign
     - goimports
     - gosec
-    - gosimple
     - govet
     - nilerr
     - predeclared

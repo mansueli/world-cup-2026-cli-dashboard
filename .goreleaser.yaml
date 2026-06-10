@@ -12,19 +12,11 @@ builds:
       - windows
       - darwin
 
-archives:
-  - replacements:
-      darwin: Darwin
-      linux: Linux
-      windows: Windows
-      386: i386
-      amd64: x86_64
-
 checksum:
   name_template: 'checksums.txt'
 
 snapshot:
-  name_template: "{{ incpatch .Version }}-next"
+  version_template: "{{ incpatch .Version }}-next"
 
 changelog:
   sort: asc
@@ -36,16 +28,15 @@ changelog:
 universal_binaries:
   - replace: true
 
-brews:
+homebrew_casks:
   - name: world-cup-2026-cli-dashboard
     homepage: "https://github.com/{{ .Env.GITHUB_REPOSITORY }}"
     license: "MIT"
-    tap:
+    repository:
       owner: "{{ .Env.HOMEBREW_TAP_OWNER }}"
       name: "{{ .Env.HOMEBREW_TAP_REPO }}"
       branch: main
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
     commit_author:
       name: "{{ .Env.HOMEBREW_COMMIT_AUTHOR_NAME }}"
       email: "{{ .Env.HOMEBREW_COMMIT_AUTHOR_EMAIL }}"
-    repository:
-      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"

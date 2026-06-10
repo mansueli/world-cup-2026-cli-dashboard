@@ -1,138 +1,100 @@
-![screenshot](https://raw.githubusercontent.com/mansueli/world-cup-2026-cli-dashboard/main/screenshot.png)
+<p align="center">
+  <img alt="GoReleaser Logo" src="https://avatars2.githubusercontent.com/u/24697112?v=3&s=200" height="200" />
+  <h3 align="center">GoReleaser</h3>
+  <p align="center">Release engineering, simplified.</p>
+  <p align="center">
+    <img height="30" src="https://cdn.simpleicons.org/go/555555/ffffff" alt="Go" />
+    <img height="30" src="https://cdn.simpleicons.org/rust/555555/ffffff" alt="Rust" />
+    <img height="30" src="https://cdn.simpleicons.org/zig/555555/ffffff" alt="Zig" />
+    <img height="30" src="https://cdn.simpleicons.org/typescript/555555/ffffff" alt="TypeScript" />
+    <img height="30" src="https://cdn.simpleicons.org/python/555555/ffffff" alt="Python" />
+  </p>
+</p>
 
-# World Cup 2026 CLI Dashboard [![lint](https://github.com/mansueli/world-cup-2026-cli-dashboard/workflows/lint/badge.svg)](https://github.com/mansueli/world-cup-2026-cli-dashboard/actions) [![test](https://github.com/mansueli/world-cup-2026-cli-dashboard/workflows/test/badge.svg)](https://github.com/mansueli/world-cup-2026-cli-dashboard/actions) [![release](https://badgen.net/github/release/mansueli/world-cup-2026-cli-dashboard)](https://github.com/mansueli/world-cup-2026-cli-dashboard/releases)
+---
 
-[![forthebadge](https://raw.githubusercontent.com/BraveUX/for-the-badge/master/src/images/badges//built-with-love.svg)](https://forthebadge.com) [![forthebadge](https://raw.githubusercontent.com/BraveUX/for-the-badge/master/src/images/badges/kinda-sfw.svg)](https://forthebadge.com) [![forthebadge](https://raw.githubusercontent.com/BraveUX/for-the-badge/master/src/images/badges/made-with-go.svg)](https://forthebadge.com)
+We handle the complexities of releasing so you can focus in building what really
+matters: **your software**.
 
-Fork notice: this repository is maintained at `github.com/mansueli/world-cup-2026-cli-dashboard` as a fork of the original project by Cédric Blondeau for the 2026 World Cup edition.
+![](https://goreleaser.com/static/goreleaser.svg)
 
-## Features
+---
 
-- ⚽ Live matches from https://worldcup26.ir/api-docs/
-- 🗒️ Team lineups
-- 📅 Scheduled and past matches
-- 📒 Standings & bracket
-- 📊 Player stats (goals, yellow cards, red cards)
-- 🔁 Auto refresh every 5-15 seconds (`r` to refresh instantly)
+## Get GoReleaser
 
-## Install
+- [On your machine](https://goreleaser.com/install/);
+- [On CI/CD systems](https://goreleaser.com/ci/).
 
-### Method 1: Homebrew 🍺
+## Documentation
 
-Install:
-```bash
-brew tap mansueli/homebrew-world-cup-2026-cli-dashboard
-brew install world-cup-2026-cli-dashboard
-```
+Documentation is hosted live at https://goreleaser.com
 
-Run:
-```bash
-world-cup-2026-cli-dashboard
-```
+## Community
 
-## Runtime Configuration
+You have questions, need support and or just want to talk about GoReleaser?
 
-- `WC_REFRESH_SECONDS`: refresh interval in seconds, clamped to `5..15` (default `10`)
-- `WC_DATA_SOURCE`: set to `local` to force local static data (`live` is default)
-- `WC_DATA_SOURCE=supabase`: force reading data from Supabase cache tables
-- `WC_SUPABASE_URL`: Supabase project URL (base URL or `/rest/v1` URL)
-- `WC_SUPABASE_ANON_KEY`: Supabase publishable key
+Here are ways to get in touch with the GoReleaser community:
 
-Default public Supabase settings used when Supabase mode is selected and env vars are not set:
+[![Join Discord](https://img.shields.io/badge/Discuss_on_Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/RGEBtg8vQ6)
+[![Follow on 𝕏](https://img.shields.io/badge/Follow_on_𝕏-000000?style=for-the-badge&logo=x&logoColor=white)](https://twitter.com/goreleaser)
+[![Follow Telegram Channel](https://img.shields.io/badge/Follow_on_Telegram-26A5E4?style=for-the-badge&logo=telegram&logoColor=%23FFFFFF)](https://t.me/goreleasernews)
+[![GitHub Discussions](https://img.shields.io/badge/Discuss_on_GITHUB-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/goreleaser/goreleaser/discussions)
 
-- `WC_SUPABASE_URL=https://worldcup.mansueli.com`
-- `WC_SUPABASE_ANON_KEY=sb_publishable_ZB3uMP-a-C5b8hNQIsxNYA_R0-tn6wr`
+You can find the links above and all others [here](https://goreleaser.com/links/).
 
-Example:
-```bash
-WC_REFRESH_SECONDS=5 world-cup-2026-cli-dashboard
+### Code of Conduct
 
-WC_DATA_SOURCE=supabase \
-WC_SUPABASE_URL=https://worldcup.mansueli.com \
-WC_SUPABASE_ANON_KEY=sb_publishable_ZB3uMP-a-C5b8hNQIsxNYA_R0-tn6wr \
-world-cup-2026-cli-dashboard
-```
+This project adheres to the Contributor Covenant [code of conduct](https://github.com/goreleaser/.github/blob/main/CODE_OF_CONDUCT.md).
+By participating, you are expected to uphold this code.
+We appreciate your contribution.
+Please refer to our [contributing guidelines](CONTRIBUTING.md) for further information.
 
-## Supabase Broadcast Architecture
+## Badges
 
-This repository now includes Supabase scaffolding for an event-driven update flow:
+[![Release](https://img.shields.io/github/release/goreleaser/goreleaser.svg?style=for-the-badge)](https://github.com/goreleaser/goreleaser/releases/latest)
+[![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=for-the-badge)](/LICENSE.md)
+[![Build status](https://img.shields.io/github/actions/workflow/status/goreleaser/goreleaser/build.yml?style=for-the-badge&branch=main)](https://github.com/goreleaser/goreleaser/actions?workflow=build)
+[![Codecov branch](https://img.shields.io/codecov/c/github/goreleaser/goreleaser/main.svg?style=for-the-badge)](https://codecov.io/gh/goreleaser/goreleaser)
+[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/goreleaser&style=for-the-badge)](https://artifacthub.io/packages/search?repo=goreleaser)
+[![Go Doc](https://img.shields.io/badge/godoc-reference-blue.svg?style=for-the-badge)](http://godoc.org/github.com/goreleaser/goreleaser)
+[![Powered By: GoReleaser](https://img.shields.io/badge/powered%20by-goreleaser-green.svg?style=for-the-badge)](https://github.com/goreleaser)
+[![Backers on Open Collective](https://opencollective.com/goreleaser/backers/badge.svg?style=for-the-badge)](https://opencollective.com/goreleaser/backers/)
+[![Sponsors on Open Collective](https://opencollective.com/goreleaser/sponsors/badge.svg?style=for-the-badge)](https://opencollective.com/goreleaser/sponsors/)
+[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow.svg?style=for-the-badge)](https://conventionalcommits.org)
+[![CII Best Practices](https://img.shields.io/cii/summary/5420?label=openssf%20best%20practices&style=for-the-badge)](https://bestpractices.coreinfrastructure.org/projects/5420)
+[![GoReportCard](https://goreportcard.com/badge/github.com/goreleaser/goreleaser?style=for-the-badge)](https://goreportcard.com/report/github.com/goreleaser/goreleaser)
 
-- Migration: `supabase/migrations/20260609_worldcup_sync.sql`
-- Automation migration: `supabase/migrations/20260609_worldcup_cron_automation.sql`
-- Edge Function: `supabase/functions/worldcup-sync/index.ts`
+## Contributing
 
-How it works:
+This project exists thanks to all the people who contribute.
+[Contribution guide](CONTRIBUTING.md).
 
-1. Edge function fetches `teams`, `groups`, and `games` from `worldcup26.ir`.
-2. It computes `is_live_or_soon` where "soon" means kickoff within 15 minutes.
-3. It updates `wc.sync_state` with `is_live_or_soon` and `next_kickoff`.
-4. Data is upserted into `wc.teams`, `wc.games`, and `wc.groups`.
-5. DB trigger broadcasts game changes only when `wc.sync_state.is_live_or_soon = true`.
+## Sponsoring
 
-Important client rule:
+Does you or your company use GoReleaser?
 
-- Open realtime subscription only when `wc.sync_state.is_live_or_soon` is true.
-- Disconnect immediately when `wc.sync_state.is_live_or_soon` becomes false.
+You can help keep the project bug-free and feature rich by sponsoring the
+project and its maintainers.
 
-This enforces the requirement that no realtime connection remains open when there is no live game and no game starting within 15 minutes.
+You can sponsor GoReleaser via:
 
-For fully automated server-side triggering, use the pg_net + pg_cron setup in `supabase/README.md`.
+- **[GitHub Sponsors](https://github.com/sponsors/caarlos0)**
+- **[OpenCollective](https://opencollective.com/goreleaser)**
 
-## Homebrew Release Setup
+A big **thank you** to all current, past, and future sponsors!
 
-The release workflow in `.github/workflows/release.yml` publishes binaries and updates a Homebrew tap through GoReleaser.
+---
 
-Required repository secrets:
+<!-- sponsors:begin -->
+<!-- this list is auto-generated by https://github.com/goreleaser/sponsors -->
+<div align="center">
+  <h2>Our Sponsors</h2>
+  <p align="center"><strong>Diamond</strong><br> <a href="https://serpapi.com/?utm_source=goreleaser&utm_medium=sponsor&utm_campaign=homepage&utm_content=github" target="_blank" rel="noopener sponsored" ><img src="https://github.com/serpapi.png" alt="SerpApi" width="128"/></a></p>
+  <p align="center"><strong>Gold</strong><br> <a href="https://opensource.mercedes-benz.com/?utm_source=goreleaser&utm_medium=sponsor&utm_campaign=homepage&utm_content=github" target="_blank" rel="noopener sponsored" ><img src="https://avatars.githubusercontent.com/u/34240465?s=96&v=4" alt="Mercedes-Benz Group" width="96"/></a> <a href="https://resources.github.com/github-secure-open-source-fund/?utm_source=goreleaser&utm_medium=sponsor&utm_campaign=homepage&utm_content=github" target="_blank" rel="noopener sponsored" ><img src="https://avatars.githubusercontent.com/u/199005812?s=96&v=4" alt="GitHub SecureOSS Fund " width="96"/></a> <a href="https://nitric.io?utm_source=goreleaser&utm_medium=sponsor&utm_campaign=homepage&utm_content=github" target="_blank" rel="noopener sponsored" ><img src="https://avatars.githubusercontent.com/u/72055470?s=96&v=4" alt="nitric" width="96"/></a></p>
+  <p align="center"><strong>Silver</strong><br> <a href="https://depot.dev?utm_source=goreleaser&utm_medium=sponsor&utm_campaign=homepage&utm_content=opencollective" target="_blank" rel="noopener sponsored" ><img src="https://images.opencollective.com/depot/39125a1/logo.png?height=80" alt="Depot" width="80"/></a> <a href="https://www.n-ix.com/?utm_source=goreleaser&utm_medium=sponsor&utm_campaign=homepage&utm_content=opencollective" target="_blank" rel="noopener sponsored" ><img src="https://images.opencollective.com/n-ix-ltd/575a7a5/logo.png?height=80" alt="N-iX Ltd" width="80"/></a></p>
+  <p align="center"><strong>Bronze</strong><br> <a href="https://www.conet.de?utm_source=goreleaser&utm_medium=sponsor&utm_campaign=homepage&utm_content=github" target="_blank" rel="noopener sponsored" ><img src="https://avatars.githubusercontent.com/u/35725664?s=64&v=4" alt="conet cloud" width="64"/></a> <a href="https://encore.dev?utm_source=goreleaser&utm_medium=sponsor&utm_campaign=homepage&utm_content=github" target="_blank" rel="noopener sponsored" ><img src="https://avatars.githubusercontent.com/u/50438175?s=64&v=4" alt="Encore" width="64"/></a> <a href="https://www.comet.com/site/?utm_source=goreleaser&utm_medium=sponsor&utm_campaign=homepage&utm_content=github" target="_blank" rel="noopener sponsored" ><img src="https://avatars.githubusercontent.com/u/31487821?s=64&v=4" alt="Comet" width="64"/></a> <a href="https://about.gitea.com/?utm_source=goreleaser&utm_medium=sponsor&utm_campaign=homepage&utm_content=opencollective" target="_blank" rel="noopener sponsored" ><img src="https://images.opencollective.com/gitea/bf35c2f/logo.png?height=64" alt="Gitea" width="64"/></a> <a href="https://www.interviewpal.com?utm_source=goreleaser&utm_medium=sponsor&utm_campaign=homepage&utm_content=github" target="_blank" rel="noopener sponsored" ><img src="https://avatars.githubusercontent.com/u/268665632?s=64&v=4" alt="InterviewPal.com" width="64"/></a></p>
+  <h3>And many more!</h3>
+  <p>See the full list <a href="https://goreleaser.com/sponsors" target="_blank" rel="noopener sponsored">here</a>.</p>
+</div>
 
-- `HOMEBREW_TAP_OWNER`
-- `HOMEBREW_TAP_REPO`
-- `HOMEBREW_TAP_GITHUB_TOKEN`
-- `HOMEBREW_COMMIT_AUTHOR_NAME`
-- `HOMEBREW_COMMIT_AUTHOR_EMAIL`
-
-Create a tag to publish:
-```bash
-git tag v0.1.0
-git push origin v0.1.0
-```
-
-### Method 2: Docker 🐳
-
-Build from the `main` branch:
-```bash
-docker build --no-cache https://github.com/mansueli/world-cup-2026-cli-dashboard.git#main -t world-cup-2026-cli-dashboard
-```
-
-Run it:
-```bash
-docker run -ti -e TZ=America/Toronto world-cup-2026-cli-dashboard
-```
-
-Replace `America/Toronto` with the desired timezone.
-
-### Method 3: Go package
-
-Requirements:
-- Go 1.19+ (with `$PATH` properly set up)
-- Git
-
-```bash
-go install github.com/mansueli/world-cup-2026-cli-dashboard@latest
-world-cup-2026-cli-dashboard
-```
-
-### Method 4: Pre-compiled binaries
-
-Pre-compiled binaries are available on the [releases page](https://github.com/mansueli/world-cup-2026-cli-dashboard/releases).
-
-## UI
-
-UI is powered by [bubbletea](https://github.com/charmbracelet/bubbletea) and [lipgloss](https://github.com/charmbracelet/lipgloss).
-
-For optimal results, it's recommended to use a terminal with:
-- True Color (24-bit) support;
-- at least 160 columns and 50 rows.
-
-## LICENSE
-
-MIT
+<!-- sponsors:end -->
