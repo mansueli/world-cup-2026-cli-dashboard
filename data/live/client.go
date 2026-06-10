@@ -58,7 +58,7 @@ func (c *Client) GroupTables() ([]data.GroupTable, error) {
 		for _, entry := range g.Teams {
 			team := teamByID[entry.TeamID]
 			code := teamCode(team, entry.TeamID)
-			ensureTeamInfo(code, team.NameEN, g.Name)
+			ensureTeamInfo(code, team.NameEN, g.Name, team.ISO2)
 
 			table = append(table, data.GroupTableTeam{
 				Code:              code,
@@ -118,8 +118,8 @@ func (c *Client) SortedMatches() ([]data.Match, error) {
 		homeCode := teamCode(homeTeam, g.HomeTeamID)
 		awayCode := teamCode(awayTeam, g.AwayTeamID)
 
-		ensureTeamInfo(homeCode, pickFirst(homeTeam.NameEN, g.HomeTeamNameEN, homeCode), g.Group)
-		ensureTeamInfo(awayCode, pickFirst(awayTeam.NameEN, g.AwayTeamNameEN, awayCode), g.Group)
+		ensureTeamInfo(homeCode, pickFirst(homeTeam.NameEN, g.HomeTeamNameEN, homeCode), g.Group, homeTeam.ISO2)
+		ensureTeamInfo(awayCode, pickFirst(awayTeam.NameEN, g.AwayTeamNameEN, awayCode), g.Group, awayTeam.ISO2)
 
 		matchDate := parseLocalDate(g.LocalDate)
 		status, minute := mapStatus(g.Finished, g.TimeElapsed)
@@ -168,7 +168,7 @@ func (c *Client) fetchTeamsMap() (map[string]teamAPI, error) {
 	fresh := make(map[string]teamAPI, len(payload.Teams))
 	for _, team := range payload.Teams {
 		fresh[team.ID] = team
-		ensureTeamInfo(teamCode(team, team.ID), team.NameEN, team.Group)
+		ensureTeamInfo(teamCode(team, team.ID), team.NameEN, team.Group, team.ISO2)
 	}
 
 	c.mu.Lock()
@@ -271,10 +271,12 @@ func teamCode(team teamAPI, fallbackID string) string {
 	return "T" + strings.ToUpper(strings.TrimSpace(fallbackID))
 }
 
-func ensureTeamInfo(code, name, group string) {
+func ensureTeamInfo(code, name, group, iso2 string) {
 	if code == "" {
 		return
 	}
+
+	data.SetTeamISO2(code, iso2)
 
 	if info, ok := data.TeamInfoByCode[code]; ok {
 		if info.Name == "" && strings.TrimSpace(name) != "" {

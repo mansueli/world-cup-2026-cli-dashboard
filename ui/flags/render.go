@@ -4,11 +4,16 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/mansueli/world-cup-2026-cli-dashboard/data"
 )
 
 func Render(countryCode string) string {
 	countryFlag, ok := countryFlags[countryCode]
 	if !ok {
+		iso2 := data.TeamISO2ByCode[strings.ToUpper(strings.TrimSpace(countryCode))]
+		if flag := emojiFlag(iso2); flag != "" {
+			return flag
+		}
 		return ""
 	}
 
@@ -36,4 +41,21 @@ func Render(countryCode string) string {
 	}
 
 	return b.String()
+}
+
+func emojiFlag(iso2 string) string {
+	iso2 = strings.ToUpper(strings.TrimSpace(iso2))
+	if len(iso2) != 2 {
+		return ""
+	}
+
+	b := []byte(iso2)
+	if b[0] < 'A' || b[0] > 'Z' || b[1] < 'A' || b[1] > 'Z' {
+		return ""
+	}
+
+	const regionalIndicatorA = 0x1F1E6
+	r1 := rune(regionalIndicatorA + int(b[0]-'A'))
+	r2 := rune(regionalIndicatorA + int(b[1]-'A'))
+	return string([]rune{r1, r2})
 }

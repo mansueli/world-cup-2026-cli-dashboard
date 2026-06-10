@@ -1,5 +1,7 @@
 package data
 
+import "strings"
+
 var TeamInfoByCode = map[string]TeamInfo{
 	"ECU": {Name: "Ecuador", Group: "A", FirstColor: "#FFD100", SecondColor: "#EF3340"},
 	"NED": {Name: "Netherlands", Group: "A", FirstColor: "#F36C21", SecondColor: "#F36C21"},
@@ -33,4 +35,16 @@ var TeamInfoByCode = map[string]TeamInfo{
 	"POR": {Name: "Portugal", Group: "H", FirstColor: "#E42518", SecondColor: "#0D6938"},
 	"KOR": {Name: "South Korea", Group: "H", FirstColor: "#EC0F32", SecondColor: "#021858"},
 	"URU": {Name: "Uruguay", Group: "H", FirstColor: "#55B5E5", SecondColor: "#55B5E5"},
+}
+
+var TeamISO2ByCode = map[string]string{}
+
+func SetTeamISO2(code, iso2 string) {
+	code = strings.ToUpper(strings.TrimSpace(code))
+	iso2 = strings.ToUpper(strings.TrimSpace(iso2))
+	if code == "" || len(iso2) != 2 {
+		return
+	}
+
+	TeamISO2ByCode[code] = iso2
 }

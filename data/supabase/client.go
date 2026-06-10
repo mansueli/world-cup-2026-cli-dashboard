@@ -46,6 +46,8 @@ func (c *Client) GroupTables() ([]data.GroupTable, error) {
 	teamByID := map[string]teamRow{}
 	for _, team := range teams {
 		teamByID[team.TeamID] = team
+		code := teamCode(team.FifaCode, team.ISO2, team.TeamID)
+		data.SetTeamISO2(code, team.ISO2)
 	}
 
 	groups, err := c.fetchGroups()
@@ -104,6 +106,8 @@ func (c *Client) SortedMatches() ([]data.Match, error) {
 	teamByID := map[string]teamRow{}
 	for _, team := range teams {
 		teamByID[team.TeamID] = team
+		code := teamCode(team.FifaCode, team.ISO2, team.TeamID)
+		data.SetTeamISO2(code, team.ISO2)
 	}
 
 	games, err := c.fetchGames()
