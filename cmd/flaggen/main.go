@@ -31,7 +31,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -62,7 +62,7 @@ func main() {
 			continue
 		}
 		imgBytes, _ := io.ReadAll(imgResp.Body)
-		imgResp.Body.Close()
+		_ = imgResp.Body.Close()
 		if imgResp.StatusCode < 200 || imgResp.StatusCode >= 300 {
 			fmt.Fprintf(os.Stderr, "skip %s (%s): status %d\n", code, t.NameEN, imgResp.StatusCode)
 			continue
@@ -81,32 +81,29 @@ func main() {
 	sort.Strings(codes)
 
 	outPath := filepath.Join("ui", "flags", "generated_2026_flags.go")
-	f, err := os.Create(outPath)
-	if err != nil {
-		panic(err)
-	}
-	defer f.Close()
 
-	fmt.Fprintln(f, "package flags")
-	fmt.Fprintln(f)
-	fmt.Fprintln(f, "func init() {")
+	var buf strings.Builder
+	buf.WriteString("package flags\n\nfunc init() {\n")
 	for _, code := range codes {
 		grid := entries[code]
-		fmt.Fprintf(f, "\tcountryFlags[%q] = [14][25]string{\n", code)
+		fmt.Fprintf(&buf, "\tcountryFlags[%q] = [14][25]string{\n", code)
 		for y := 0; y < 14; y++ {
-			fmt.Fprint(f, "\t\t{")
+			buf.WriteString("\t\t{")
 			for x := 0; x < 25; x++ {
 				if x > 0 {
-					fmt.Fprint(f, ", ")
+					buf.WriteString(", ")
 				}
-				fmt.Fprintf(f, "%q", grid[y][x])
+				fmt.Fprintf(&buf, "%q", grid[y][x])
 			}
-			fmt.Fprintln(f, "},")
+			buf.WriteString("},\n")
 		}
-		fmt.Fprintln(f, "\t}")
+		buf.WriteString("\t}\n")
 	}
-	fmt.Fprintln(f, "}")
+	buf.WriteString("}\n")
 
+	if err := os.WriteFile(outPath, []byte(buf.String()), 0600); err != nil { //nolint:gosec
+		panic(err)
+	}
 	fmt.Printf("generated %d flag entries in %s\n", len(codes), outPath)
 }
 
@@ -124,7 +121,7 @@ func sampleToGrid(img image.Image, w, h int) [14][25]string {
 				sx = b.Max.X - 1
 			}
 			r, g, b8, _ := img.At(sx, sy).RGBA()
-			grid[y][x] = fmt.Sprintf("#%02x%02x%02x", uint8(r>>8), uint8(g>>8), uint8(b8>>8))
+			grid[y][x] = fmt.Sprintf("#%02x%02x%02x", uint8(r>>8), uint8(g>>8), uint8(b8>>8)) //nolint:gosec // values are 0-255 after >>8
 		}
 	}
 	return grid

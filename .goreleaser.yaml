@@ -16,7 +16,7 @@ checksum:
   name_template: 'checksums.txt'
 
 snapshot:
-  name_template: "{{ incpatch .Version }}-next"
+  version_template: "{{ incpatch .Version }}-next"
 
 changelog:
   sort: asc
@@ -28,7 +28,7 @@ changelog:
 universal_binaries:
   - replace: true
 
-brews:
+homebrew_casks:
   - name: world-cup-2026-cli-dashboard
     homepage: "https://github.com/{{ .Env.GITHUB_REPOSITORY }}"
     license: "MIT"

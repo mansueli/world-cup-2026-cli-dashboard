@@ -19,12 +19,7 @@ func Render(countryCode string) string {
 
 	height := len(countryFlag)
 	b := strings.Builder{}
-	for y := 0; y < height; y += 2 {
-		if y >= height-1 {
-			// we expect a height of 14px, so it should never happen
-			continue
-		}
-
+	for y := 0; y+1 < height; y += 2 {
 		for x := 0; x < 25; x++ {
 			color1 := countryFlag[y][x]
 			color2 := countryFlag[y+1][x]
@@ -54,8 +49,8 @@ func emojiFlag(iso2 string) string {
 		return ""
 	}
 
-	const regionalIndicatorA = 0x1F1E6
-	r1 := rune(regionalIndicatorA + int(b[0]-'A'))
-	r2 := rune(regionalIndicatorA + int(b[1]-'A'))
+	const regionalIndicatorA = rune(0x1F1E6)
+	r1 := regionalIndicatorA + rune(b[0]-'A')
+	r2 := regionalIndicatorA + rune(b[1]-'A')
 	return string([]rune{r1, r2})
 }
