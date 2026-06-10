@@ -28,13 +28,13 @@ changelog:
 snapshot:
   version_template: "{{ incpatch .Version }}-next"
 
-homebrew:
+brews:
   - name: world-cup-2026-cli-dashboard
     homepage: "https://github.com/mansueli/world-cup-2026-cli-dashboard"
     description: "Watch live World Cup 2026 matches in your terminal"
     license: "MIT"
 
-    tap:
+    repository:
       owner: "{{ .Env.HOMEBREW_TAP_OWNER }}"
       name: homebrew-world-cup-2026-cli-dashboard
       branch: main
