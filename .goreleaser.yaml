@@ -12,14 +12,6 @@ builds:
       - windows
       - darwin
 
-archives:
-  - replacements:
-      darwin: Darwin
-      linux: Linux
-      windows: Windows
-      386: i386
-      amd64: x86_64
-
 checksum:
   name_template: 'checksums.txt'
 
@@ -44,8 +36,7 @@ brews:
       owner: "{{ .Env.HOMEBREW_TAP_OWNER }}"
       name: "{{ .Env.HOMEBREW_TAP_REPO }}"
       branch: main
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
     commit_author:
       name: "{{ .Env.HOMEBREW_COMMIT_AUTHOR_NAME }}"
       email: "{{ .Env.HOMEBREW_COMMIT_AUTHOR_EMAIL }}"
-    repository:
-      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
