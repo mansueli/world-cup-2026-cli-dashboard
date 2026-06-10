@@ -12,11 +12,11 @@ builds:
       - windows
       - darwin
 
+universal_binaries:
+  - replace: true
+
 checksum:
   name_template: 'checksums.txt'
-
-snapshot:
-  version_template: "{{ incpatch .Version }}-next"
 
 changelog:
   sort: asc
@@ -25,18 +25,20 @@ changelog:
       - '^docs:'
       - '^test:'
 
-universal_binaries:
-  - replace: true
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
 
-homebrew_casks:
+homebrew:
   - name: world-cup-2026-cli-dashboard
     homepage: "https://github.com/mansueli/world-cup-2026-cli-dashboard"
+    description: "Watch live World Cup 2026 matches in your terminal"
     license: "MIT"
-    repository:
+
+    tap:
       owner: "{{ .Env.HOMEBREW_TAP_OWNER }}"
-      name: "{{ .Env.HOMEBREW_TAP_REPO }}"
+      name: homebrew-world-cup-2026-cli-dashboard
       branch: main
-      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+
     commit_author:
       name: "{{ .Env.HOMEBREW_COMMIT_AUTHOR_NAME }}"
       email: "{{ .Env.HOMEBREW_COMMIT_AUTHOR_EMAIL }}"
