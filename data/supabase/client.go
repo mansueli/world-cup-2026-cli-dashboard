@@ -115,6 +115,15 @@ func (c *Client) SortedMatches() ([]data.Match, error) {
 		return nil, err
 	}
 
+	events, err := c.fetchEvents()
+	if err != nil {
+		return nil, err
+	}
+	eventsByGameID := make(map[string][]eventRow)
+	for _, ev := range events {
+		eventsByGameID[ev.GameID] = append(eventsByGameID[ev.GameID], ev)
+	}
+
 	matches := make([]data.Match, 0, len(games))
 	for _, game := range games {
 		home := teamByID[game.HomeTeamID]
@@ -130,17 +139,22 @@ func (c *Client) SortedMatches() ([]data.Match, error) {
 			data.TeamInfoByCode[awayCode] = data.TeamInfo{Name: pickName(away.NameEN, awayCode), Group: strings.ToUpper(game.GroupName), FirstColor: "#1D3557", SecondColor: "#F1FAEE"}
 		}
 
+		gameEvents := eventsByGameID[game.GameID]
+		homeEvents, awayEvents := splitEventsByTeam(gameEvents, homeCode, awayCode)
+
 		status, minute := mapStatus(game.Finished, game.TimeElapsed)
 		matches = append(matches, data.Match{
-			ID:            atoi(game.GameID),
-			HomeTeamCode:  homeCode,
-			AwayTeamCode:  awayCode,
-			Date:          parseDate(game.KickoffAt, game.LocalDateRaw),
-			HomeTeamScore: scoreToUint64(game.HomeScore),
-			AwayTeamScore: scoreToUint64(game.AwayScore),
-			Status:        status,
-			Minute:        minute,
-			Stage:         mapStage(game.Stage),
+			ID:             atoi(game.GameID),
+			HomeTeamCode:   homeCode,
+			AwayTeamCode:   awayCode,
+			Date:           parseDate(game.KickoffAt, game.LocalDateRaw),
+			HomeTeamScore:  scoreToUint64(game.HomeScore),
+			AwayTeamScore:  scoreToUint64(game.AwayScore),
+			Status:         status,
+			Minute:         minute,
+			Stage:          mapStage(game.Stage),
+			HomeTeamEvents: homeEvents,
+			AwayTeamEvents: awayEvents,
 		})
 	}
 
@@ -170,6 +184,36 @@ func (c *Client) fetchGroups() ([]groupRow, error) {
 		return nil, err
 	}
 	return rows, nil
+}
+
+func (c *Client) fetchEvents() ([]eventRow, error) {
+	rows := []eventRow{}
+	query := "select=game_id,team_code,event_type,minute,player,canceled"
+	err := c.get("events", &rows, query)
+	if err != nil {
+		if strings.Contains(err.Error(), "404") || strings.Contains(err.Error(), "relation") {
+			return []eventRow{}, nil
+		}
+		return nil, err
+	}
+	return rows, nil
+}
+
+func splitEventsByTeam(events []eventRow, homeCode, awayCode string) (homeEvents, awayEvents []data.Event) {
+	for _, ev := range events {
+		event := data.Event{
+			Type:     ev.EventType,
+			Minute:   ev.Minute,
+			Player:   ev.Player,
+			Canceled: ev.Canceled,
+		}
+		if strings.EqualFold(ev.TeamCode, homeCode) {
+			homeEvents = append(homeEvents, event)
+		} else if strings.EqualFold(ev.TeamCode, awayCode) {
+			awayEvents = append(awayEvents, event)
+		}
+	}
+	return homeEvents, awayEvents
 }
 
 func (c *Client) get(table string, out any, query string) error {
@@ -321,4 +365,13 @@ type gameRow struct {
 	KickoffAt    string `json:"kickoff_at"`
 	HomeScore    int    `json:"home_score"`
 	AwayScore    int    `json:"away_score"`
+}
+
+type eventRow struct {
+	GameID    string `json:"game_id"`
+	TeamCode  string `json:"team_code"`
+	EventType string `json:"event_type"`
+	Minute    string `json:"minute"`
+	Player    string `json:"player"`
+	Canceled  bool   `json:"canceled"`
 }

@@ -14,6 +14,17 @@ type ApiGame = {
   type: string;
 };
 
+type ApiEvent = {
+  id: number | string;
+  game_id?: string;
+  team_id?: string;
+  team_code?: string;
+  type: string;
+  minute?: string;
+  player?: string;
+  canceled?: boolean;
+};
+
 type ApiTeam = {
   id: string;
   name_en: string;
@@ -141,10 +152,11 @@ async function fetchJSON<T>(url: string): Promise<T> {
 async function fetchWithFallback() {
   try {
     // Primary provider
-    const [gamesPayload, teamsPayload, groupsPayload] = await Promise.all([
+    const [gamesPayload, teamsPayload, groupsPayload, eventsPayload] = await Promise.all([
       fetchJSON<{ games: ApiGame[] }>(`${API_BASE}/get/games`),
       fetchJSON<{ teams: ApiTeam[] }>(`${API_BASE}/get/teams`),
       fetchJSON<{ groups: ApiGroup[] }>(`${API_BASE}/get/groups`),
+      fetchJSON<{ events: ApiEvent[] }>(`${API_BASE}/get/events`).catch(() => ({ events: [] })),
     ]);
 
     console.log("✅ Using primary provider (worldcup26.ir)");
@@ -152,6 +164,7 @@ async function fetchWithFallback() {
       games: gamesPayload.games ?? [],
       teams: teamsPayload.teams ?? [],
       groups: groupsPayload.groups ?? [],
+      events: eventsPayload?.events ?? [],
       source: "primary",
     };
   } catch (primaryError) {
@@ -180,7 +193,7 @@ async function fetchWithFallback() {
         home_score: String(home.goals ?? 0),
         away_score: String(away.goals ?? 0),
         group: m.stage_name?.includes("Group") ? m.stage_name : "",
-        local_date: kickoff 
+        local_date: kickoff
           ? `${kickoff.getUTCMonth() + 1}/${kickoff.getUTCDate()}/${kickoff.getUTCFullYear()} ${kickoff.getUTCHours().toString().padStart(2, '0')}:${kickoff.getUTCMinutes().toString().padStart(2, '0')}`
           : (m.datetime || ""),
         finished: String(isFinished),
@@ -209,7 +222,7 @@ async function fetchWithFallback() {
     const groups: ApiGroup[] = teamsData.groups?.map(g => ({ name: `Group ${g.letter}` })) || [];
 
     console.log("✅ Using fallback provider (worldcupjson.net)");
-    return { games, teams, groups, source: "fallback" };
+    return { games, teams, groups, events: [], source: "fallback" };
   } catch (fallbackError) {
     console.error("❌ Fallback also failed:", fallbackError.message);
     throw new Error(`Both providers failed. Primary: ${primaryError?.message}, Fallback: ${fallbackError.message}`);
@@ -218,7 +231,7 @@ async function fetchWithFallback() {
 
 Deno.serve(async () => {
   try {
-    const { games, teams, groups, source } = await fetchWithFallback();
+    const { games, teams, groups, events, source } = await fetchWithFallback();
 
     const now = new Date();
 
@@ -229,8 +242,6 @@ Deno.serve(async () => {
       p_is_live_or_soon: activeWindow,
       p_next_kickoff: next ? next.toISOString() : null,
     });
-
-    // ... (teamRows, gameRows, groupRows mapping stays the same)
 
     const teamRows = teams.map((team) => ({
       team_id: team.id,
@@ -264,6 +275,17 @@ Deno.serve(async () => {
       updated_at: new Date().toISOString(),
     }));
 
+    const eventRows = events.map((ev) => ({
+      game_id: ev.game_id ?? "",
+      team_code: ev.team_code ?? ev.team_id ?? "",
+      event_type: ev.type,
+      minute: ev.minute ?? "",
+      player: ev.player ?? "",
+      canceled: ev.canceled ?? false,
+      raw: ev,
+      updated_at: new Date().toISOString(),
+    }));
+
     if (teamRows.length > 0) {
       const { error } = await supabase.schema("wc").from("teams").upsert(teamRows, { onConflict: "team_id" });
       if (error) throw error;
@@ -279,6 +301,11 @@ Deno.serve(async () => {
       if (error) throw error;
     }
 
+    if (eventRows.length > 0) {
+      const { error } = await supabase.schema("wc").from("events").upsert(eventRows, { onConflict: "id" });
+      if (error) throw error;
+    }
+
     return new Response(
       JSON.stringify({
         ok: true,
@@ -289,6 +316,7 @@ Deno.serve(async () => {
           teams: teamRows.length,
           games: gameRows.length,
           groups: groupRows.length,
+          events: eventRows.length,
         },
       }),
       { headers: { "content-type": "application/json" } },

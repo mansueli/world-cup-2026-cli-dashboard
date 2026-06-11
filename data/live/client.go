@@ -110,6 +110,13 @@ func (c *Client) SortedMatches() ([]data.Match, error) {
 		return nil, err
 	}
 
+	var eventsPayload eventsResponse
+	_ = c.getJSON("/get/events", &eventsPayload)
+	eventsByGameID := make(map[string][]eventAPI)
+	for _, ev := range eventsPayload.Events {
+		eventsByGameID[ev.GameID] = append(eventsByGameID[ev.GameID], ev)
+	}
+
 	matches := make([]data.Match, 0, len(payload.Games))
 	for _, g := range payload.Games {
 		homeTeam := teamByID[g.HomeTeamID]
@@ -121,20 +128,25 @@ func (c *Client) SortedMatches() ([]data.Match, error) {
 		ensureTeamInfo(homeCode, pickFirst(homeTeam.NameEN, g.HomeTeamNameEN, homeCode), g.Group, homeTeam.ISO2)
 		ensureTeamInfo(awayCode, pickFirst(awayTeam.NameEN, g.AwayTeamNameEN, awayCode), g.Group, awayTeam.ISO2)
 
+		gameEvents := eventsByGameID[g.ID]
+		homeEvents, awayEvents := splitEventsByTeam(gameEvents, homeCode, awayCode)
+
 		matchDate := parseLocalDate(g.LocalDate)
 		status, minute := mapStatus(g.Finished, g.TimeElapsed)
 
 		matches = append(matches, data.Match{
-			ID:            atoi(g.ID),
-			HomeTeamCode:  homeCode,
-			AwayTeamCode:  awayCode,
-			Date:          matchDate,
-			Venue:         "",
-			HomeTeamScore: atou64(g.HomeScore),
-			AwayTeamScore: atou64(g.AwayScore),
-			Minute:        minute,
-			Status:        status,
-			Stage:         mapStage(g.Type),
+			ID:             atoi(g.ID),
+			HomeTeamCode:   homeCode,
+			AwayTeamCode:   awayCode,
+			Date:           matchDate,
+			Venue:          "",
+			HomeTeamScore:  atou64(g.HomeScore),
+			AwayTeamScore:  atou64(g.AwayScore),
+			Minute:         minute,
+			Status:         status,
+			Stage:          mapStage(g.Type),
+			HomeTeamEvents: homeEvents,
+			AwayTeamEvents: awayEvents,
 		})
 	}
 
@@ -146,6 +158,23 @@ func (c *Client) SortedMatches() ([]data.Match, error) {
 	})
 
 	return matches, nil
+}
+
+func splitEventsByTeam(events []eventAPI, homeCode, awayCode string) (homeEvents, awayEvents []data.Event) {
+	for _, ev := range events {
+		event := data.Event{
+			Type:     ev.Type,
+			Minute:   ev.Minute,
+			Player:   ev.Player,
+			Canceled: ev.Canceled,
+		}
+		if strings.EqualFold(ev.TeamCode, homeCode) {
+			homeEvents = append(homeEvents, event)
+		} else if strings.EqualFold(ev.TeamCode, awayCode) {
+			awayEvents = append(awayEvents, event)
+		}
+	}
+	return homeEvents, awayEvents
 }
 
 func (c *Client) fetchTeamsMap() (map[string]teamAPI, error) {
@@ -422,4 +451,17 @@ type gameAPI struct {
 	Type           string `json:"type"`
 	HomeTeamNameEN string `json:"home_team_name_en"`
 	AwayTeamNameEN string `json:"away_team_name_en"`
+}
+
+type eventsResponse struct {
+	Events []eventAPI `json:"events"`
+}
+
+type eventAPI struct {
+	GameID   string `json:"game_id"`
+	TeamCode string `json:"team_code"`
+	Type     string `json:"type"`
+	Minute   string `json:"minute"`
+	Player   string `json:"player"`
+	Canceled bool   `json:"canceled"`
 }

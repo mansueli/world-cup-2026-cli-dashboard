@@ -15,6 +15,7 @@ Fork notice: this repository is maintained at `github.com/mansueli/world-cup-202
 - 📅 Scheduled and past matches
 - 📒 Standings & bracket
 - 📊 Player stats (goals, yellow cards, red cards)
+- 🔔 Match events (goals, yellow cards, red cards, substitutions)
 - 🔁 Auto refresh every 5-15 seconds (`r` to refresh instantly)
 
 ## Install
