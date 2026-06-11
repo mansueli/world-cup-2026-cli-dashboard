@@ -4,3 +4,4 @@
 world-cup-2022-cli-dashboard
 dist/
 .bin/
+.env
