@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 type ApiGame = {
   id: string;
@@ -26,7 +26,30 @@ type ApiGroup = {
   name: string;
 };
 
-const API_BASE = Deno.env.get("WC_API_BASE") ?? "https://worldcup26.ir";
+type FallbackGame = {
+  id: number | string;
+  home_team_country?: string;
+  away_team_country?: string;
+  home_team?: { country: string; name: string; goals?: number };
+  away_team?: { country: string; name: string; goals?: number };
+  datetime?: string;
+  status?: string;
+  stage_name?: string;
+  // ... other fields
+};
+
+type FallbackTeamGroup = {
+  letter: string;
+  teams: Array<{
+    country: string;
+    name: string;
+    group_letter?: string;
+    // ... other stats
+  }>;
+};
+
+const API_BASE = "https://worldcup26.ir";
+const FALLBACK_BASE = "https://worldcupjson.net";
 const WINDOW_MINUTES = Number(Deno.env.get("WC_WINDOW_MINUTES") ?? "15");
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
@@ -55,20 +78,22 @@ function parseKickoff(raw: string): Date | null {
 
   if (
     [month, day, year, hour, minute].some((n) => Number.isNaN(n)) ||
-    month < 1 ||
-    month > 12 ||
-    day < 1 ||
-    day > 31 ||
-    hour < 0 ||
-    hour > 23 ||
-    minute < 0 ||
-    minute > 59
+    month < 1 || month > 12 ||
+    day < 1 || day > 31 ||
+    hour < 0 || hour > 23 ||
+    minute < 0 || minute > 59
   ) {
     return null;
   }
 
-  // Store as UTC for consistent scheduling checks.
   return new Date(Date.UTC(year, month - 1, day, hour, minute, 0));
+}
+
+// Fallback kickoff parser (ISO datetime from worldcupjson.net)
+function parseFallbackKickoff(datetime: string | undefined): Date | null {
+  if (!datetime) return null;
+  const date = new Date(datetime);
+  return isNaN(date.getTime()) ? null : date;
 }
 
 function isLive(game: ApiGame): boolean {
@@ -105,25 +130,96 @@ function nextKickoff(games: ApiGame[], now: Date): Date | null {
   return next;
 }
 
-async function fetchJSON<T>(path: string): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`);
+async function fetchJSON<T>(url: string): Promise<T> {
+  const response = await fetch(url);
   if (!response.ok) {
-    throw new Error(`Failed ${path}: ${response.status}`);
+    throw new Error(`Failed ${url}: ${response.status}`);
   }
   return (await response.json()) as T;
 }
 
-Deno.serve(async () => {
+async function fetchWithFallback() {
   try {
+    // Primary provider
     const [gamesPayload, teamsPayload, groupsPayload] = await Promise.all([
-      fetchJSON<{ games: ApiGame[] }>("/get/games"),
-      fetchJSON<{ teams: ApiTeam[] }>("/get/teams"),
-      fetchJSON<{ groups: ApiGroup[] }>("/get/groups"),
+      fetchJSON<{ games: ApiGame[] }>(`${API_BASE}/get/games`),
+      fetchJSON<{ teams: ApiTeam[] }>(`${API_BASE}/get/teams`),
+      fetchJSON<{ groups: ApiGroup[] }>(`${API_BASE}/get/groups`),
     ]);
 
-    const games = gamesPayload.games ?? [];
-    const teams = teamsPayload.teams ?? [];
-    const groups = groupsPayload.groups ?? [];
+    console.log("✅ Using primary provider (worldcup26.ir)");
+    return {
+      games: gamesPayload.games ?? [],
+      teams: teamsPayload.teams ?? [],
+      groups: groupsPayload.groups ?? [],
+      source: "primary",
+    };
+  } catch (primaryError) {
+    console.error("⚠️ Primary provider failed:", primaryError.message);
+    console.log("🔄 Falling back to worldcupjson.net...");
+  }
+
+  // Fallback
+  try {
+    const [matches, teamsData] = await Promise.all([
+      fetchJSON<FallbackGame[]>(`${FALLBACK_BASE}/matches`),
+      fetchJSON<{ groups: FallbackTeamGroup[] }>(`${FALLBACK_BASE}/teams`),
+    ]);
+
+    // Map matches to ApiGame shape
+    const games: ApiGame[] = matches.map((m) => {
+      const home = m.home_team || { country: m.home_team_country || "", name: "" };
+      const away = m.away_team || { country: m.away_team_country || "", name: "" };
+      const kickoff = parseFallbackKickoff(m.datetime);
+      const isFinished = m.status === "completed" || (m.home_team?.goals !== undefined && m.away_team?.goals !== undefined);
+
+      return {
+        id: String(m.id),
+        home_team_id: home.country,
+        away_team_id: away.country,
+        home_score: String(home.goals ?? 0),
+        away_score: String(away.goals ?? 0),
+        group: m.stage_name?.includes("Group") ? m.stage_name : "",
+        local_date: kickoff 
+          ? `${kickoff.getUTCMonth() + 1}/${kickoff.getUTCDate()}/${kickoff.getUTCFullYear()} ${kickoff.getUTCHours().toString().padStart(2, '0')}:${kickoff.getUTCMinutes().toString().padStart(2, '0')}`
+          : (m.datetime || ""),
+        finished: String(isFinished),
+        time_elapsed: isFinished ? "FT" : (m.status === "in progress" ? "LIVE" : "NS"),
+        type: m.stage_name || "Group Stage",
+      };
+    });
+
+    // Map teams
+    const teams: ApiTeam[] = [];
+    if (teamsData.groups) {
+      for (const g of teamsData.groups) {
+        for (const t of g.teams) {
+          teams.push({
+            id: t.country,
+            name_en: t.name,
+            fifa_code: t.country,
+            iso2: t.country,
+            groups: g.letter,
+          });
+        }
+      }
+    }
+
+    // Groups
+    const groups: ApiGroup[] = teamsData.groups?.map(g => ({ name: `Group ${g.letter}` })) || [];
+
+    console.log("✅ Using fallback provider (worldcupjson.net)");
+    return { games, teams, groups, source: "fallback" };
+  } catch (fallbackError) {
+    console.error("❌ Fallback also failed:", fallbackError.message);
+    throw new Error(`Both providers failed. Primary: ${primaryError?.message}, Fallback: ${fallbackError.message}`);
+  }
+}
+
+Deno.serve(async () => {
+  try {
+    const { games, teams, groups, source } = await fetchWithFallback();
+
     const now = new Date();
 
     const activeWindow = games.some((game) => isLive(game) || isSoon(game, now));
@@ -134,7 +230,8 @@ Deno.serve(async () => {
       p_next_kickoff: next ? next.toISOString() : null,
     });
 
-    // Keep base data cached even when inactive. Broadcast trigger is gated by sync_state.
+    // ... (teamRows, gameRows, groupRows mapping stays the same)
+
     const teamRows = teams.map((team) => ({
       team_id: team.id,
       fifa_code: team.fifa_code,
@@ -185,6 +282,7 @@ Deno.serve(async () => {
     return new Response(
       JSON.stringify({
         ok: true,
+        source,
         live_or_soon: activeWindow,
         next_kickoff: next ? next.toISOString() : null,
         counts: {
@@ -193,9 +291,7 @@ Deno.serve(async () => {
           groups: groupRows.length,
         },
       }),
-      {
-        headers: { "content-type": "application/json" },
-      },
+      { headers: { "content-type": "application/json" } },
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
