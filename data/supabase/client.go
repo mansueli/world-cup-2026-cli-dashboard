@@ -131,16 +131,22 @@ func (c *Client) SortedMatches() ([]data.Match, error) {
 		}
 
 		status, minute := mapStatus(game.Finished, game.TimeElapsed)
+
+		homeEvents, awayEvents := parseEventsFromRaw(game.Raw, homeCode, awayCode)
+
 		matches = append(matches, data.Match{
-			ID:            atoi(game.GameID),
-			HomeTeamCode:  homeCode,
-			AwayTeamCode:  awayCode,
-			Date:          parseDate(game.KickoffAt, game.LocalDateRaw),
-			HomeTeamScore: scoreToUint64(game.HomeScore),
-			AwayTeamScore: scoreToUint64(game.AwayScore),
-			Status:        status,
-			Minute:        minute,
-			Stage:         mapStage(game.Stage),
+			ID:               atoi(game.GameID),
+			HomeTeamCode:     homeCode,
+			AwayTeamCode:     awayCode,
+			Date:             parseDate(game.KickoffAt, game.LocalDateRaw),
+			HomeTeamScore:    scoreToUint64(game.HomeScore),
+			AwayTeamScore:    scoreToUint64(game.AwayScore),
+			Status:           status,
+			Minute:           minute,
+			Stage:            mapStage(game.Stage),
+			HomeTeamEvents:   homeEvents,
+			AwayTeamEvents:   awayEvents,
+			// Lineups can be parsed similarly from game.Raw if present in the upstream payload
 		})
 	}
 
@@ -157,7 +163,8 @@ func (c *Client) fetchTeams() ([]teamRow, error) {
 
 func (c *Client) fetchGames() ([]gameRow, error) {
 	rows := []gameRow{}
-	query := "select=game_id,home_team_id,away_team_id,group_name,stage,finished,time_elapsed,local_date_raw,kickoff_at,home_score,away_score&order=kickoff_at.asc"
+	// Include raw so we can extract events, lineups, etc. from the original upstream payload
+	query := "select=game_id,home_team_id,away_team_id,group_name,stage,finished,time_elapsed,local_date_raw,kickoff_at,home_score,away_score,raw&order=kickoff_at.asc"
 	if err := c.get("games", &rows, query); err != nil {
 		return nil, err
 	}
@@ -279,6 +286,119 @@ func scoreToUint64(score int) uint64 {
 	return uint64(score)
 }
 
+// parseEventsFromRaw attempts to extract events from the stored raw JSONB payload.
+// It supports a few common shapes:
+//   - { "events": [ {type, minute, player, canceled, team?} ] }
+//   - { "home_events": [...], "away_events": [...] }
+// Adjust the struct tags / logic to match the actual upstream payload shape.
+func parseEventsFromRaw(raw json.RawMessage, homeCode, awayCode string) (homeEvents, awayEvents []data.Event) {
+	if len(raw) == 0 {
+		return nil, nil
+	}
+
+	// Try unified events list first
+	var unified struct {
+		Events []struct {
+			Type     string `json:"type"`
+			Minute   any    `json:"minute"`
+			Player   string `json:"player"`
+			Canceled bool   `json:"canceled"`
+			Team     string `json:"team"` // "home", "away", or team code
+		} `json:"events"`
+	}
+	if err := json.Unmarshal(raw, &unified); err == nil && len(unified.Events) > 0 {
+		for _, e := range unified.Events {
+			ev := data.Event{
+				Type:     strings.TrimSpace(e.Type),
+				Player:   strings.TrimSpace(e.Player),
+				Canceled: e.Canceled,
+			}
+			switch v := e.Minute.(type) {
+			case float64:
+				ev.Minute = strconv.FormatFloat(v, 'f', 0, 64)
+			case string:
+				ev.Minute = strings.TrimSpace(v)
+			}
+
+			side := strings.ToLower(strings.TrimSpace(e.Team))
+			if side == "home" || side == homeCode {
+				homeEvents = append(homeEvents, ev)
+			} else if side == "away" || side == awayCode {
+				awayEvents = append(awayEvents, ev)
+			} else {
+				// If no team info, put in both or skip (conservative: put in home for now)
+				homeEvents = append(homeEvents, ev)
+			}
+		}
+		return homeEvents, awayEvents
+	}
+
+	// Try separate home/away event arrays
+	var separated struct {
+		HomeEvents []struct {
+			Type     string `json:"type"`
+			Minute   any    `json:"minute"`
+			Player   string `json:"player"`
+			Canceled bool   `json:"canceled"`
+		} `json:"home_events"`
+		AwayEvents []struct {
+			Type     string `json:"type"`
+			Minute   any    `json:"minute"`
+			Player   string `json:"player"`
+			Canceled bool   `json:"canceled"`
+		} `json:"away_events"`
+	}
+	if err := json.Unmarshal(raw, &separated); err == nil {
+		for _, e := range separated.HomeEvents {
+			ev := data.Event{Type: strings.TrimSpace(e.Type), Player: strings.TrimSpace(e.Player), Canceled: e.Canceled}
+			switch v := e.Minute.(type) {
+			case float64:
+				ev.Minute = strconv.FormatFloat(v, 'f', 0, 64)
+			case string:
+				ev.Minute = strings.TrimSpace(v)
+			}
+			homeEvents = append(homeEvents, ev)
+		}
+		for _, e := range separated.AwayEvents {
+			ev := data.Event{Type: strings.TrimSpace(e.Type), Player: strings.TrimSpace(e.Player), Canceled: e.Canceled}
+			switch v := e.Minute.(type) {
+			case float64:
+				ev.Minute = strconv.FormatFloat(v, 'f', 0, 64)
+			case string:
+				ev.Minute = strings.TrimSpace(v)
+			}
+			awayEvents = append(awayEvents, ev)
+		}
+		return homeEvents, awayEvents
+	}
+
+	// No recognized event shape found — events will be empty (yellow cards won't appear until data shape matches)
+	return nil, nil
+}
+
+type gameRow struct {
+	GameID       string          `json:"game_id"`
+	HomeTeamID   string          `json:"home_team_id"`
+	AwayTeamID   string          `json:"away_team_id"`
+	GroupName    string          `json:"group_name"`
+	Stage        string          `json:"stage"`
+	Finished     bool            `json:"finished"`
+	TimeElapsed  string          `json:"time_elapsed"`
+	LocalDateRaw string          `json:"local_date_raw"`
+	KickoffAt    string          `json:"kickoff_at"`
+	HomeScore    int             `json:"home_score"`
+	AwayScore    int             `json:"away_score"`
+	Raw          json.RawMessage `json:"raw"`
+}
+
+type teamRow struct {
+	TeamID    string `json:"team_id"`
+	FifaCode  string `json:"fifa_code"`
+	ISO2      string `json:"iso2"`
+	GroupName string `json:"group_name"`
+	NameEN    string `json:"name_en"`
+}
+
 type groupRow struct {
 	GroupName string       `json:"group_name"`
 	Raw       groupRawData `json:"raw"`
@@ -299,26 +419,4 @@ type groupRawTeamData struct {
 	GF     string `json:"gf"`
 	GA     string `json:"ga"`
 	GD     string `json:"gd"`
-}
-
-type teamRow struct {
-	TeamID    string `json:"team_id"`
-	FifaCode  string `json:"fifa_code"`
-	ISO2      string `json:"iso2"`
-	GroupName string `json:"group_name"`
-	NameEN    string `json:"name_en"`
-}
-
-type gameRow struct {
-	GameID       string `json:"game_id"`
-	HomeTeamID   string `json:"home_team_id"`
-	AwayTeamID   string `json:"away_team_id"`
-	GroupName    string `json:"group_name"`
-	Stage        string `json:"stage"`
-	Finished     bool   `json:"finished"`
-	TimeElapsed  string `json:"time_elapsed"`
-	LocalDateRaw string `json:"local_date_raw"`
-	KickoffAt    string `json:"kickoff_at"`
-	HomeScore    int    `json:"home_score"`
-	AwayScore    int    `json:"away_score"`
 }

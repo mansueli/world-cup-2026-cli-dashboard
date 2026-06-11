@@ -81,7 +81,7 @@ func (c *Client) GroupTables() ([]data.GroupTable, error) {
 				return table[i].GoalsDifferential > table[j].GoalsDifferential
 			}
 			if table[i].GoalsFor != table[j].GoalsFor {
-				return table[i].GoalsFor > table[j].GoalsFor
+				return table[i].GoalsFor > table[i].GoalsFor
 			}
 			return table[i].Code < table[j].Code
 		})
@@ -124,17 +124,24 @@ func (c *Client) SortedMatches() ([]data.Match, error) {
 		matchDate := parseLocalDate(g.LocalDate)
 		status, minute := mapStatus(g.Finished, g.TimeElapsed)
 
+		// TODO: If /get/games already includes events in the response, extend gameAPI struct
+		// and map them here similar to the Supabase client.
+		// Otherwise, you may need a second call like:
+		//   detail, _ := c.fetchGameDetail(g.ID)
+		//   homeEvents, awayEvents := parseGameDetailEvents(detail)
+
 		matches = append(matches, data.Match{
 			ID:            atoi(g.ID),
 			HomeTeamCode:  homeCode,
 			AwayTeamCode:  awayCode,
 			Date:          matchDate,
-			Venue:         "",
+			Venue:         "", // populate if available in response
 			HomeTeamScore: atou64(g.HomeScore),
 			AwayTeamScore: atou64(g.AwayScore),
 			Minute:        minute,
 			Status:        status,
 			Stage:         mapStage(g.Type),
+			// HomeTeamEvents / AwayTeamEvents / Lineups left empty until event parsing is added
 		})
 	}
 
@@ -146,6 +153,17 @@ func (c *Client) SortedMatches() ([]data.Match, error) {
 	})
 
 	return matches, nil
+}
+
+// fetchGameDetail is a placeholder for fetching richer per-match data (events, lineups, etc.)
+// if the upstream API exposes /get/game/{id} or similar.
+func (c *Client) fetchGameDetail(gameID string) (map[string]any, error) {
+	var detail map[string]any
+	path := fmt.Sprintf("/get/game/%s", gameID)
+	if err := c.getJSON(path, &detail); err != nil {
+		return nil, err
+	}
+	return detail, nil
 }
 
 func (c *Client) fetchTeamsMap() (map[string]teamAPI, error) {
@@ -372,6 +390,8 @@ func pickFirst(values ...string) string {
 	return ""
 }
 
+// === Response structs (extend these with Events / Lineup fields if the API provides them) ===
+
 type teamsResponse struct {
 	Teams []teamAPI `json:"teams"`
 }
@@ -422,4 +442,8 @@ type gameAPI struct {
 	Type           string `json:"type"`
 	HomeTeamNameEN string `json:"home_team_name_en"`
 	AwayTeamNameEN string `json:"away_team_name_en"`
+	// Add fields here if the response contains events/lineups, e.g.:
+	// Events     json.RawMessage `json:"events"`
+	// HomeEvents json.RawMessage `json:"home_events"`
+	// AwayEvents json.RawMessage `json:"away_events"`
 }
