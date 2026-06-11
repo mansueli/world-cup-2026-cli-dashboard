@@ -2,9 +2,11 @@
 
 # World Cup 2026 CLI Dashboard [![lint](https://github.com/mansueli/world-cup-2026-cli-dashboard/workflows/lint/badge.svg)](https://github.com/mansueli/world-cup-2026-cli-dashboard/actions) [![test](https://github.com/mansueli/world-cup-2026-cli-dashboard/workflows/test/badge.svg)](https://github.com/mansueli/world-cup-2026-cli-dashboard/actions) [![release](https://badgen.net/github/release/mansueli/world-cup-2026-cli-dashboard)](https://github.com/mansueli/world-cup-2026-cli-dashboard/releases)
 
-[![forthebadge](https://raw.githubusercontent.com/BraveUX/for-the-badge/master/src/images/badges//built-with-love.svg)](https://forthebadge.com) [![forthebadge](https://raw.githubusercontent.com/BraveUX/for-the-badge/master/src/images/badges/kinda-sfw.svg)](https://forthebadge.com) [![forthebadge](https://raw.githubusercontent.com/BraveUX/for-the-badge/master/src/images/badges/made-with-go.svg)](https://forthebadge.com)
 
-Fork notice: this repository is maintained at `github.com/mansueli/world-cup-2026-cli-dashboard` as a fork of the original project by Cédric Blondeau for the 2026 World Cup edition.
+
+[![forthebadge](https://raw.githubusercontent.com/andrewsbarbaro/for-the-badge/refs/heads/master/public/badges/built-with-love.svg)](https://forthebadge.com) [![forthebadge](https://raw.githubusercontent.com/andrewsbarbaro/for-the-badge/refs/heads/master/public/badges/kinda-sfw.svg)](https://forthebadge.com) [![forthebadge](https://raw.githubusercontent.com/andrewsbarbaro/for-the-badge/refs/heads/master/public/badges/made-with-go.svg)](https://forthebadge.com)[![forthebadge](https://forthebadge.com/api/badges/generate?panels=2&primaryLabel=made+with+&secondaryLabel=supabase&primaryBGColor=%23010400&primaryTextColor=%2300ee72&secondaryBGColor=%2356534f&secondaryTextColor=%2300ff8a&primaryFontSize=12&primaryFontWeight=600&primaryLetterSpacing=2&primaryFontFamily=Roboto&primaryTextTransform=uppercase&secondaryFontSize=12&secondaryFontWeight=900&secondaryLetterSpacing=2&secondaryFontFamily=Montserrat&secondaryTextTransform=uppercase&primaryIcon=supabase&primaryIconColor=%23FFFFFF&primaryIconSize=16&primaryIconPosition=left)](https://forthebadge.com)
+
+Fork notice: this repository is maintained at `github.com/mansueli/world-cup-2026-cli-dashboard` as a fork of the original project by Cédric Blondeau for the 2022 World Cup edition.
 
 ## Features
 
