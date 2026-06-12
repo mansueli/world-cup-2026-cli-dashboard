@@ -140,7 +140,11 @@ func (c *Client) SortedMatches() ([]data.Match, error) {
 		}
 
 		gameEvents := eventsByGameID[game.GameID]
-		homeEvents, awayEvents := splitEventsByTeam(gameEvents, homeCode, awayCode)
+		homeEvents, awayEvents := splitEventsByTeam(
+			gameEvents,
+			teamMatcher{id: home.TeamID, code: homeCode},
+			teamMatcher{id: away.TeamID, code: awayCode},
+		)
 
 		status, minute := mapStatus(game.Finished, game.TimeElapsed)
 		matches = append(matches, data.Match{
@@ -214,7 +218,27 @@ func (c *Client) fetchEvents() ([]eventRow, error) {
 	return rows, nil
 }
 
-func splitEventsByTeam(events []eventRow, homeCode, awayCode string) (homeEvents, awayEvents []data.Event) {
+// teamMatcher identifies a match side by both its raw team_id and its derived
+// display code. The wc.events.team_code column stores the upstream team_id
+// (e.g. "1"), not the 3-letter FIFA code, so we match on the id first and fall
+// back to the code for resilience against future data shapes.
+type teamMatcher struct {
+	id   string
+	code string
+}
+
+func (t teamMatcher) matches(value string) bool {
+	v := strings.TrimSpace(value)
+	if v == "" {
+		return false
+	}
+	if strings.EqualFold(v, strings.TrimSpace(t.id)) {
+		return true
+	}
+	return strings.EqualFold(v, strings.TrimSpace(t.code))
+}
+
+func splitEventsByTeam(events []eventRow, home, away teamMatcher) (homeEvents, awayEvents []data.Event) {
 	for _, ev := range events {
 		event := data.Event{
 			Type:     ev.EventType,
@@ -222,9 +246,10 @@ func splitEventsByTeam(events []eventRow, homeCode, awayCode string) (homeEvents
 			Player:   ev.Player,
 			Canceled: ev.Canceled,
 		}
-		if strings.EqualFold(ev.TeamCode, homeCode) {
+		switch {
+		case home.matches(ev.TeamCode):
 			homeEvents = append(homeEvents, event)
-		} else if strings.EqualFold(ev.TeamCode, awayCode) {
+		case away.matches(ev.TeamCode):
 			awayEvents = append(awayEvents, event)
 		}
 	}
