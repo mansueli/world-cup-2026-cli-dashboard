@@ -73,12 +73,12 @@ func envInt(name string, fallback int) int {
 	return fallback
 }
 
-func clampInt(value, min, max int) int {
-	if value < min {
-		return min
+func clampInt(value, lo, hi int) int {
+	if value < lo {
+		return lo
 	}
-	if value > max {
-		return max
+	if value > hi {
+		return hi
 	}
 	return value
 }
