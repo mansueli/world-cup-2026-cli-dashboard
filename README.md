@@ -16,7 +16,7 @@ Fork notice: this repository is maintained at `github.com/mansueli/world-cup-202
 - 📒 Standings & bracket
 - 📊 Player stats (goals, yellow cards, red cards)
 - 🔔 Match events (goals, yellow cards, red cards, substitutions)
-- 🔁 Auto refresh every 5-15 seconds (`r` to refresh instantly)
+- 🔁 Adaptive auto refresh: polls Supabase every 3s while a match is live or starting soon, and backs off when idle (`r` to refresh instantly)
 
 ## Install
 
@@ -35,30 +35,39 @@ world-cup-2026-cli-dashboard
 
 ## Runtime Configuration
 
-- `WC_REFRESH_SECONDS`: refresh interval in seconds, clamped to `5..15` (default `10`)
-- `WC_DATA_SOURCE`: set to `local` to force local static data (`live` is default)
-- `WC_DATA_SOURCE=supabase`: force reading data from Supabase cache tables
+The dashboard reads live data **directly from the Supabase `wc` schema by default**, polling the `games` table (and related tables) on a timer. It uses `wc.sync_state.is_live_or_soon` to decide how often to poll: fast during a live window, slow when idle. There is no realtime websocket subscription on the client.
+
+- `WC_REFRESH_SECONDS`: live polling interval in seconds while a match is live or starting soon, clamped to `1..15` (default `3`)
+- `WC_IDLE_REFRESH_SECONDS`: idle polling interval in seconds when no match is live or soon, clamped to `10..300` (default `30`)
+- `WC_DATA_SOURCE`: data source selector. Defaults to `supabase`. Set to `live` to fetch directly from `worldcup26.ir`, or `local` to use bundled static data.
 - `WC_SUPABASE_URL`: Supabase project URL (base URL or `/rest/v1` URL)
 - `WC_SUPABASE_ANON_KEY`: Supabase publishable key
 
-Default public Supabase settings used when Supabase mode is selected and env vars are not set:
+Default public Supabase settings used when env vars are not set:
 
 - `WC_SUPABASE_URL=https://worldcup.mansueli.com`
 - `WC_SUPABASE_ANON_KEY=sb_publishable_ZB3uMP-a-C5b8hNQIsxNYA_R0-tn6wr`
 
 Example:
 ```bash
-WC_REFRESH_SECONDS=5 world-cup-2026-cli-dashboard
-
-WC_DATA_SOURCE=supabase \
-WC_SUPABASE_URL=https://worldcup.mansueli.com \
-WC_SUPABASE_ANON_KEY=sb_publishable_ZB3uMP-a-C5b8hNQIsxNYA_R0-tn6wr \
+# Default: Supabase, 3s live / 30s idle
 world-cup-2026-cli-dashboard
+
+# Poll every 2s when live, 60s when idle
+WC_REFRESH_SECONDS=2 WC_IDLE_REFRESH_SECONDS=60 world-cup-2026-cli-dashboard
+
+# Point at a custom Supabase project
+WC_SUPABASE_URL=https://your-project.supabase.co \
+WC_SUPABASE_ANON_KEY=sb_publishable_xxx \
+world-cup-2026-cli-dashboard
+
+# Bypass Supabase and read directly from worldcup26.ir
+WC_DATA_SOURCE=live world-cup-2026-cli-dashboard
 ```
 
-## Supabase Broadcast Architecture
+## Supabase Sync Architecture
 
-This repository now includes Supabase scaffolding for an event-driven update flow:
+This repository includes Supabase scaffolding that keeps a cached copy of the tournament data in the `wc` schema:
 
 - Migration: `supabase/migrations/20260609_worldcup_sync.sql`
 - Automation migration: `supabase/migrations/20260609_worldcup_cron_automation.sql`
@@ -70,16 +79,15 @@ How it works:
 2. It computes `is_live_or_soon` where "soon" means kickoff within 15 minutes.
 3. It updates `wc.sync_state` with `is_live_or_soon` and `next_kickoff`.
 4. Data is upserted into `wc.teams`, `wc.games`, and `wc.groups`.
-5. DB trigger broadcasts game changes only when `wc.sync_state.is_live_or_soon = true`.
 
-Important client rule:
+Client behavior:
 
-- Open realtime subscription only when `wc.sync_state.is_live_or_soon` is true.
-- Disconnect immediately when `wc.sync_state.is_live_or_soon` becomes false.
+- The CLI polls the `wc` tables directly over PostgREST; it does **not** open a realtime websocket.
+- Before each refresh it reads `wc.sync_state.is_live_or_soon` to choose the polling cadence: the fast `WC_REFRESH_SECONDS` interval (default 3s) when a game is live or starting within 15 minutes, and the slower `WC_IDLE_REFRESH_SECONDS` interval (default 30s) otherwise.
 
-This enforces the requirement that no realtime connection remains open when there is no live game and no game starting within 15 minutes.
+This keeps load low when nothing is happening while still surfacing live score and event changes within a few seconds. The database broadcast trigger remains available for other realtime consumers, but it is not required by this CLI.
 
-For fully automated server-side triggering, use the pg_net + pg_cron setup in `supabase/README.md`.
+For fully automated server-side syncing, use the pg_net + pg_cron setup in `supabase/README.md`.
 
 ## Homebrew Release Setup
 

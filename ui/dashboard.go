@@ -39,16 +39,21 @@ type dashboard struct {
 	matchIndex        int
 	matchIndexChanged bool
 
-	refreshInterval time.Duration
+	liveInterval time.Duration
+	idleInterval time.Duration
+	isLiveOrSoon bool
 
 	width, height int
 }
 
-func NewDashboard(fetcher dataFetcher, refreshInterval time.Duration) tea.Model {
+func NewDashboard(fetcher dataFetcher, liveInterval, idleInterval time.Duration) tea.Model {
 	s := spinner.New()
 	s.Spinner = spinner.Globe
-	if refreshInterval <= 0 {
-		refreshInterval = 10 * time.Second
+	if liveInterval <= 0 {
+		liveInterval = 3 * time.Second
+	}
+	if idleInterval <= 0 {
+		idleInterval = 30 * time.Second
 	}
 
 	return &dashboard{
@@ -60,7 +65,8 @@ func NewDashboard(fetcher dataFetcher, refreshInterval time.Duration) tea.Model 
 
 		help: help.New(),
 
-		refreshInterval: refreshInterval,
+		liveInterval: liveInterval,
+		idleInterval: idleInterval,
 	}
 }
 
@@ -81,6 +87,7 @@ func (m *dashboard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.groupTablesByLetter = msg.groupTablesByLetter
 		m.sortedMatches = msg.sortedMatches
 		m.playerStatsByTeam = msg.playerStatsByTeam
+		m.isLiveOrSoon = msg.isLiveOrSoon
 		if !m.matchIndexChanged || m.matchIndex > len(msg.sortedMatches)-1 {
 			m.matchIndex = pickMatchIndex(msg.sortedMatches)
 		}
@@ -234,8 +241,13 @@ func (m *dashboard) groupOrBracket() string {
 }
 
 func (m *dashboard) refreshCmd() tea.Cmd {
+	interval := m.idleInterval
+	if m.isLiveOrSoon {
+		interval = m.liveInterval
+	}
+
 	return tea.Tick(
-		m.refreshInterval,
+		interval,
 		func(t time.Time) tea.Msg {
 			return intervalRefreshMsg(t)
 		},
