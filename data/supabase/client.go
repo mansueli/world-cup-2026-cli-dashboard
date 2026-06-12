@@ -161,6 +161,21 @@ func (c *Client) SortedMatches() ([]data.Match, error) {
 	return matches, nil
 }
 
+// IsLiveOrSoon reports whether the sync pipeline considers a match to be live
+// or starting soon, based on the wc.sync_state singleton row. When the row is
+// missing or the request fails, it returns false so callers fall back to the
+// slower idle polling cadence.
+func (c *Client) IsLiveOrSoon() (bool, error) {
+	rows := []syncStateRow{}
+	if err := c.get("sync_state", &rows, "select=is_live_or_soon&limit=1"); err != nil {
+		return false, err
+	}
+	if len(rows) == 0 {
+		return false, nil
+	}
+	return rows[0].IsLiveOrSoon, nil
+}
+
 func (c *Client) fetchTeams() ([]teamRow, error) {
 	rows := []teamRow{}
 	if err := c.get("teams", &rows, "select=team_id,fifa_code,iso2,group_name,name_en"); err != nil {
@@ -321,6 +336,10 @@ func scoreToUint64(score int) uint64 {
 		return 0
 	}
 	return uint64(score)
+}
+
+type syncStateRow struct {
+	IsLiveOrSoon bool `json:"is_live_or_soon"`
 }
 
 type groupRow struct {

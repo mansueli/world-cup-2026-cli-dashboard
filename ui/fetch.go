@@ -12,10 +12,18 @@ type dataFetcher interface {
 	Name() string
 }
 
+// liveStatusFetcher is an optional capability. Fetchers that can report whether
+// a match is live or starting soon (e.g. the Supabase source via wc.sync_state)
+// implement it so the dashboard can poll faster during live windows.
+type liveStatusFetcher interface {
+	IsLiveOrSoon() (bool, error)
+}
+
 type dataFetchMsg struct {
 	groupTablesByLetter map[string]data.GroupTable
 	sortedMatches       []data.Match
 	playerStatsByTeam   map[string]playerstats.PlayerStats
+	isLiveOrSoon        bool
 }
 
 type dataFetchErrMsg struct{ err error }
@@ -38,6 +46,22 @@ func dataFetchCmd(fetcher dataFetcher) func() tea.Msg {
 
 		playerStatsByTeam := playerstats.PlayerStatsByTeam(sortedMatches)
 
-		return dataFetchMsg{groupTablesByLetter, sortedMatches, playerStatsByTeam}
+		isLiveOrSoon := anyMatchLive(sortedMatches)
+		if probe, ok := fetcher.(liveStatusFetcher); ok {
+			if live, err := probe.IsLiveOrSoon(); err == nil {
+				isLiveOrSoon = live
+			}
+		}
+
+		return dataFetchMsg{groupTablesByLetter, sortedMatches, playerStatsByTeam, isLiveOrSoon}
 	}
+}
+
+func anyMatchLive(matches []data.Match) bool {
+	for _, m := range matches {
+		if m.Status == data.StatusLive {
+			return true
+		}
+	}
+	return false
 }
